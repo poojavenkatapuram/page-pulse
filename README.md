@@ -2,60 +2,109 @@
 
 Page Pulse is a focused URL auditor for checking the essential on-page signals of any public webpage. Enter a domain or complete URL to receive a concise report covering response health, content structure, metadata, and a basic accessibility signal.
 
+---
+
 ## Overview
 
-The application pairs a Next.js frontend with a FastAPI backend. The browser submits a URL to the API; the API validates it, safely fetches the target page, parses its server-rendered HTML, and returns a structured audit report.
+Page Pulse is a full-stack web application built for the **Digital Heroes Software Development Internship Qualification Task**.
+
+The application allows users to audit any public webpage by entering its URL. The frontend sends the request to a FastAPI backend, which safely fetches the webpage, analyzes its HTML, and returns a structured SEO and accessibility report.
+
+The project emphasizes:
+
+- Robust backend engineering
+- Clean API design
+- Error handling
+- Responsive frontend UI
+- Production deployment
+- Automated testing
+
+---
 
 ## Features
 
-- Audits any valid public `http` or `https` URL.
-- Automatically adds `https://` when a domain is entered without a scheme.
-- Reports HTTP status, response time, page title, meta description, H1 count, missing image alt text, and approximate visible word count.
-- Handles invalid URLs, redirects, timeouts, DNS/SSL/connection errors, non-HTML responses, oversized pages, and parsing failures with structured errors.
-- Blocks local and private-network destinations to reduce SSRF risk.
-- Provides clear empty, loading, success, validation, and error states in a responsive interface.
-- Includes automated backend and frontend test suites with mocked network behavior.
+- Audit any valid public HTTP or HTTPS URL.
+- Automatically prepend `https://` when only a domain is entered.
+- Extract:
+  - HTTP Status Code
+  - Response Time
+  - Page Title
+  - Meta Description
+  - H1 Count
+  - Images Missing Alt Text
+  - Approximate Visible Word Count
+- Gracefully handle:
+  - Invalid URLs
+  - Timeouts
+  - DNS failures
+  - SSL failures
+  - Redirect loops
+  - Non-HTML responses
+  - Oversized pages
+- SSRF protection by blocking private/local network destinations.
+- Clean responsive UI with loading, validation, success, and error states.
+- Automated backend and frontend testing.
 
-## Tech Stack
+---
+
+# Tech Stack
 
 | Layer | Technologies |
-| --- | --- |
+|--------|--------------|
 | Frontend | Next.js 15, TypeScript, Tailwind CSS, Axios, Lucide React |
 | Backend | Python 3.12, FastAPI, Pydantic v2, httpx |
-| HTML parsing | BeautifulSoup4 with lxml |
-| Frontend testing | Vitest, React Testing Library |
-| Backend testing | pytest |
-| Hosting | Vercel (frontend), Render (backend) |
+| HTML Parsing | BeautifulSoup4, lxml |
+| Backend Testing | pytest |
+| Frontend Testing | Vitest, React Testing Library |
+| Deployment | Vercel (Frontend), Render (Backend) |
 
-## Architecture
+---
+
+# Architecture
 
 ```text
 Browser
-  |
-  | POST /api/v1/audits
-  v
-Next.js frontend (Vercel)
-  |
-  v
-FastAPI API (Render)
-  |
-  +-- URL validation and SSRF checks
-  +-- Bounded HTTP fetch with redirect handling
-  +-- BeautifulSoup HTML parser
-  |
-  v
-Structured JSON audit report
+    │
+    │ POST /api/v1/audits
+    ▼
+Next.js Frontend (Vercel)
+    │
+    ▼
+FastAPI Backend (Render)
+    │
+    ├── URL Validation
+    ├── SSRF Protection
+    ├── HTTP Fetch
+    ├── HTML Parsing
+    └── Response Formatting
+    │
+    ▼
+Structured JSON Report
 ```
 
-The frontend is responsible for user interaction and report presentation. The backend owns URL validation, safe outbound HTTP requests, response-size limits, HTML parsing, and error mapping.
+The frontend is responsible for collecting user input and presenting the audit results.
 
-## API Endpoint
+The backend performs URL validation, secure HTTP fetching, HTML parsing, structured response generation, and error handling.
 
-### Create an audit
+---
 
-`POST /api/v1/audits`
+# Repository
 
-Request body:
+GitHub Repository
+
+**https://github.com/poojavenkatapuram/page-pulse**
+
+---
+
+# API Endpoint
+
+## Create Audit
+
+```
+POST /api/v1/audits
+```
+
+### Request
 
 ```json
 {
@@ -63,15 +112,7 @@ Request body:
 }
 ```
 
-Successful responses return `200 OK`. Invalid input returns `400`; non-HTML content returns `422`; unreachable upstream services return `502`; and fetch timeouts return `504`.
-
-## API Request and Response Example
-
-```bash
-curl -X POST https://page-pulse-2-6vmo.onrender.com/api/v1/audits \
-  -H "Content-Type: application/json" \
-  -d '{"url":"https://example.com"}'
-```
+### Success Response
 
 ```json
 {
@@ -86,7 +127,7 @@ curl -X POST https://page-pulse-2-6vmo.onrender.com/api/v1/audits \
 }
 ```
 
-Error responses use a consistent envelope:
+### Error Response
 
 ```json
 {
@@ -97,142 +138,341 @@ Error responses use a consistent envelope:
 }
 ```
 
-## Local Setup
+---
 
-### Prerequisites
+# API Contract
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| POST | `/api/v1/audits` | Audit a webpage |
+| GET | `/health` | Backend health check |
+
+Possible HTTP responses:
+
+| Status | Meaning |
+|---------|---------|
+| 200 | Success |
+| 400 | Invalid URL |
+| 422 | Non-HTML Response |
+| 502 | Upstream Fetch Error |
+| 504 | Timeout |
+
+---
+
+# Example cURL Request
+
+```bash
+curl -X POST https://page-pulse-2-6vmo.onrender.com/api/v1/audits \
+-H "Content-Type: application/json" \
+-d '{"url":"https://example.com"}'
+```
+
+---
+
+# Local Setup
+
+## Prerequisites
 
 - Python 3.12
-- Node.js 20.9 or later
+- Node.js 20+
 - pnpm
 
-### Backend
+---
 
-From the repository root:
+## Backend
+
+Create a virtual environment
 
 ```bash
 python -m venv .venv
 ```
 
-Activate the virtual environment, then install and run the API:
+Install dependencies
 
 ```bash
 pip install -r requirements.txt
+```
+
+Run the backend
+
+```bash
 uvicorn app.main:app --reload
 ```
 
-The API is available at `http://localhost:8000`, and its health endpoint is available at `http://localhost:8000/health`.
+Backend runs at
 
-### Frontend
+```
+http://localhost:8000
+```
 
-From the `frontend` directory:
+Health endpoint
+
+```
+http://localhost:8000/health
+```
+
+---
+
+## Frontend
+
+Move into frontend
+
+```bash
+cd frontend
+```
+
+Install packages
 
 ```bash
 pnpm install
+```
+
+Start development server
+
+```bash
 pnpm dev
 ```
 
-The frontend is available at `http://localhost:3000`.
+Runs at
 
-## Environment Variables
+```
+http://localhost:3000
+```
 
-### Backend
+---
 
-Copy `.env.example` to `.env` when local overrides are needed.
+# Environment Variables
 
-| Variable | Purpose | Default |
-| --- | --- | --- |
-| `ALLOWED_ORIGINS` | Comma-separated browser origins permitted by CORS | `http://localhost:3000` |
-| `FETCH_TIMEOUT_SECONDS` | Maximum page-fetch duration | `10` |
-| `MAX_REDIRECTS` | Maximum redirects followed | `5` |
-| `MAX_RESPONSE_BYTES` | Maximum HTML response size processed | `2000000` |
-| `PORT` | Port provided by the hosting platform | Platform-managed |
+## Backend
 
-### Frontend
+Copy
 
-Copy `frontend/.env.example` to `frontend/.env.local`.
+```
+.env.example
+```
 
-| Variable | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_API_BASE_URL` | Public base URL for the FastAPI backend |
+to
 
-For local development:
+```
+.env
+```
 
-```bash
+Variables
+
+| Variable | Description |
+|----------|-------------|
+| ALLOWED_ORIGINS | Allowed frontend origins |
+| FETCH_TIMEOUT_SECONDS | Request timeout |
+| MAX_REDIRECTS | Redirect limit |
+| MAX_RESPONSE_BYTES | Maximum HTML size |
+| PORT | Hosting platform port |
+
+---
+
+## Frontend
+
+Copy
+
+```
+frontend/.env.example
+```
+
+to
+
+```
+frontend/.env.local
+```
+
+Variable
+
+```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 ```
 
-## Live Demo
+---
 
-- Frontend: [https://page-pulse-hazel.vercel.app](https://page-pulse-hazel.vercel.app)
-- Backend: [https://page-pulse-2-6vmo.onrender.com](https://page-pulse-2-6vmo.onrender.com)
-- Health check: [https://page-pulse-2-6vmo.onrender.com/health](https://page-pulse-2-6vmo.onrender.com/health)
+# Live Deployment
 
-## Project Structure
+## Frontend
+
+https://page-pulse-hazel.vercel.app
+
+## Backend
+
+https://page-pulse-2-6vmo.onrender.com
+
+## Health Endpoint
+
+https://page-pulse-2-6vmo.onrender.com/health
+
+---
+
+# Project Structure
 
 ```text
 .
 ├── app/
-│   ├── api/                 # FastAPI routes
-│   ├── parsers/             # HTML parsing logic
-│   ├── schemas/             # Pydantic request and response models
-│   ├── services/            # Fetching and audit orchestration
-│   ├── config.py            # Application configuration
-│   └── main.py              # FastAPI application entry point
+│   ├── api/
+│   ├── parsers/
+│   ├── schemas/
+│   ├── services/
+│   ├── config.py
+│   └── main.py
+│
 ├── frontend/
-│   ├── app/                 # Next.js App Router pages and styles
-│   ├── components/          # Reusable UI components
-│   ├── lib/                 # Axios API client
-│   ├── types/               # Shared frontend types
-│   └── vitest.config.ts     # Frontend test configuration
-├── tests/                   # pytest backend tests
-├── render.yaml              # Render service configuration
-└── requirements.txt         # Python dependencies
+│   ├── app/
+│   ├── components/
+│   ├── lib/
+│   ├── types/
+│   └── vitest.config.ts
+│
+├── tests/
+├── render.yaml
+├── requirements.txt
+└── README.md
 ```
 
-## Testing
+---
 
-### Backend
+# Testing
+
+## Backend
 
 ```bash
 pytest -q
 ```
 
-The backend suite covers successful audits, URL validation, redirects, timeouts, DNS and SSL failures, non-HTML responses, oversized responses, parser extraction, and SSRF blocking. All outbound HTTP behavior is mocked; tests never depend on the internet.
+Tests include:
 
-### Frontend
+- Successful audits
+- Invalid URLs
+- DNS failures
+- SSL failures
+- Redirect handling
+- Timeouts
+- Oversized responses
+- Parser extraction
+- SSRF protection
+
+---
+
+## Frontend
 
 ```bash
 cd frontend
+
 pnpm test
+
 pnpm typecheck
 ```
 
-The frontend suite covers empty-input validation, loading behavior, disabled submission, successful report rendering, API errors, metric cards, footer content, and accessible labels.
+Tests include:
 
-## Design Decisions
+- Empty input validation
+- Loading state
+- Disabled submit button
+- Successful report rendering
+- Error rendering
+- Footer verification
+- Metric cards
+- Accessibility labels
 
-### 1. Keep outbound fetching on the backend
+---
 
-The browser never fetches audited URLs directly. Centralizing fetching in FastAPI avoids browser CORS limitations and lets the application enforce timeouts, response-size limits, redirect controls, and private-network blocking consistently.
+# Design Decisions
 
-### 2. Use a small service layer around the API route
+## 1. Backend Owns All Fetching
 
-FastAPI route handlers remain intentionally small. The audit service owns HTTP orchestration and error mapping, while the parser handles only HTML extraction. This keeps the code testable and makes each responsibility easier to change independently.
+The browser never contacts audited websites directly.
 
-### 3. Treat the report as structured data, not scraped UI text
+Keeping all network requests inside FastAPI:
 
-The backend returns a typed Pydantic response model, and the frontend consumes a corresponding TypeScript interface. This makes API contracts explicit and prevents presentation code from depending on unstructured responses.
+- avoids browser CORS issues
+- enables timeout control
+- prevents SSRF attacks
+- limits response size
+- centralizes error handling
 
-## Future Improvements
+---
 
-- Support JavaScript-rendered pages with an optional browser-rendering mode.
-- Add rate limiting and per-user audit quotas for a larger public deployment.
-- Store audit history and enable before/after comparisons.
-- Add additional SEO signals such as canonical URLs, Open Graph tags, and heading hierarchy.
-- Provide downloadable audit reports.
+## 2. Service Layer Architecture
 
-## Author
+Business logic is separated from API routes.
 
-Pooja Venkatapuram
+This makes the code:
 
-Built for the Digital Heroes Software Development Internship assignment.
+- easier to test
+- easier to maintain
+- easier to extend
+
+The API routes remain thin while services handle audit orchestration.
+
+---
+
+## 3. Strongly Typed API Contract
+
+The backend returns typed Pydantic models.
+
+The frontend consumes matching TypeScript interfaces.
+
+Benefits:
+
+- predictable API
+- compile-time safety
+- fewer runtime bugs
+- easier maintenance
+
+---
+
+# Future Improvements
+
+- JavaScript rendering using Playwright
+- Authentication and user accounts
+- Audit history
+- Export reports as PDF
+- Additional SEO metrics
+- Open Graph analysis
+- Canonical URL detection
+- Robots.txt analysis
+- Sitemap validation
+- Rate limiting
+
+---
+
+# Author
+
+**Pooja Venkatapuram**
+
+---
+
+# Assignment Information
+
+This project was developed as part of the **Digital Heroes Software Development Internship Qualification Task**.
+
+The live application includes the required footer:
+
+> **Built for Digital Heroes Training Task**
+
+linked to
+
+https://digitalheroesco.com
+
+---
+
+# Live Links
+
+### GitHub Repository
+
+https://github.com/poojavenkatapuram/page-pulse
+
+### Live Frontend
+
+https://page-pulse-hazel.vercel.app
+
+### Backend API
+
+https://page-pulse-2-6vmo.onrender.com
+
+### Health Endpoint
+
+https://page-pulse-2-6vmo.onrender.com/health
