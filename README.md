@@ -42,6 +42,11 @@ The project emphasizes:
   - Non-HTML responses
   - Oversized pages
 - SSRF protection by blocking private/local network destinations.
+- Configurable in-memory response caching for repeated audits.
+- Per-client rate limiting to protect the API from abuse.
+- Request IDs returned via the `X-Request-ID` response header.
+- Structured request logging with request ID, client IP, audit URL, status, and latency.
+- Configurable concurrency limits for outbound fetches.
 - Clean responsive UI with loading, validation, success, and error states.
 - Automated backend and frontend testing.
 
@@ -57,6 +62,19 @@ The project emphasizes:
 | Backend Testing | pytest |
 | Frontend Testing | Vitest, React Testing Library |
 | Deployment | Vercel (Frontend), Render (Backend) |
+
+---
+
+# Production-Grade Improvements
+
+The current implementation includes several runtime safeguards intended for a production deployment:
+
+- **GitHub Actions CI** for backend and frontend checks on every push and pull request.
+- **Response caching** keyed by normalized URL with configurable TTL.
+- **Per-client rate limiting** with structured `429` API errors.
+- **Structured logging** for request tracing and operational debugging.
+- **Request ID middleware** that returns `X-Request-ID` on responses.
+- **Concurrency control** using `asyncio.Semaphore` to limit simultaneous external fetches.
 
 ---
 
@@ -265,6 +283,9 @@ Variables
 | FETCH_TIMEOUT_SECONDS | Request timeout |
 | MAX_REDIRECTS | Redirect limit |
 | MAX_RESPONSE_BYTES | Maximum HTML size |
+| CACHE_TTL_SECONDS | Audit response cache duration in seconds |
+| RATE_LIMIT | Per-client API limit, for example `100/hour` |
+| MAX_CONCURRENT_REQUESTS | Maximum concurrent outbound fetches |
 | PORT | Hosting platform port |
 
 ---
@@ -351,6 +372,10 @@ Tests include:
 - Redirect handling
 - Timeouts
 - Oversized responses
+- Cache hits and cache expiry
+- Request ID middleware
+- Rate limiting
+- Concurrency limits
 - Parser extraction
 - SSRF protection
 
@@ -376,6 +401,29 @@ Tests include:
 - Footer verification
 - Metric cards
 - Accessibility labels
+
+---
+
+# Continuous Integration
+
+GitHub Actions is configured in:
+
+```text
+.github/workflows/ci.yml
+```
+
+The workflow runs on:
+
+- every push
+- every pull request
+
+Checks performed:
+
+- Backend dependency installation
+- Backend `pytest`
+- Frontend dependency installation
+- Frontend `pnpm typecheck`
+- Frontend `pnpm test`
 
 ---
 

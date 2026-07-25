@@ -3,6 +3,7 @@ import ipaddress
 import logging
 import socket
 import ssl
+from cachetools import TTLCache
 from dataclasses import dataclass
 from time import perf_counter
 from typing import NoReturn
@@ -40,20 +41,41 @@ class AuditService:
             follow_redirects=False,
             headers={"User-Agent": settings.user_agent},
         )
+        self._cache: TTLCache[str, AuditResponse] = TTLCache(maxsize=1_024, ttl=settings.cache_ttl_seconds)
+        self._cache_lock = asyncio.Lock()
+        self._fetch_semaphore = asyncio.Semaphore(settings.max_concurrent_requests)
 
     async def close(self) -> None:
         """Release pooled HTTP connections during application shutdown."""
         await self._client.aclose()
 
     async def audit(self, url: str) -> AuditResponse:
-        fetched_page = await self._fetch(url)
+        cached_report = await self._get_cached_report(url)
+        if cached_report is not None:
+            return cached_report
+
+        async with self._fetch_semaphore:
+            fetched_page = await self._fetch(url)
         parsed_page = parse_html(fetched_page.html)
-        return AuditResponse(
+        report = AuditResponse(
             url=fetched_page.url,
             http_status=fetched_page.http_status,
             response_time_ms=fetched_page.response_time_ms,
             **parsed_page.model_dump(),
         )
+        await self._set_cached_report(url, report)
+        return report
+
+    async def _get_cached_report(self, url: str) -> AuditResponse | None:
+        async with self._cache_lock:
+            cached_report = self._cache.get(url)
+            if cached_report is None:
+                return None
+            return cached_report.model_copy(deep=True)
+
+    async def _set_cached_report(self, url: str, report: AuditResponse) -> None:
+        async with self._cache_lock:
+            self._cache[url] = report.model_copy(deep=True)
 
     async def _fetch(self, initial_url: str) -> FetchedPage:
         current_url = initial_url

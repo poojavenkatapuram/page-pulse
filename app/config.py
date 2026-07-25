@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     fetch_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
     max_redirects: int = Field(default=5, ge=0, le=10)
     max_response_bytes: int = Field(default=2_000_000, ge=1_024, le=10_000_000)
+    cache_ttl_seconds: int = Field(default=300, ge=1, le=86_400)
+    rate_limit: str = "100/hour"
+    max_concurrent_requests: int = Field(default=20, ge=1, le=1_000)
     user_agent: str = "PagePulse/1.0"
 
     @field_validator("allowed_origins", mode="before")
