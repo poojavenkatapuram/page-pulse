@@ -76,6 +76,25 @@ def test_request_id_header_is_returned_for_successful_requests() -> None:
     assert UUID(request_id)
 
 
+def test_cors_preflight_returns_200_and_origin_header() -> None:
+    cors_app = create_app(Settings(allowed_origins="https://page-pulse-hazel.vercel.app"))
+
+    with TestClient(cors_app) as client:
+        response = client.options(
+            "/api/v1/audits",
+            headers={
+                "Origin": "https://page-pulse-hazel.vercel.app",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "https://page-pulse-hazel.vercel.app"
+    assert response.headers["access-control-allow-methods"]
+    assert response.headers["X-Request-ID"]
+
+
 def test_rate_limit_returns_structured_error_response() -> None:
     async def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(

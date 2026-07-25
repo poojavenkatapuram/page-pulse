@@ -82,21 +82,21 @@ The current implementation includes several runtime safeguards intended for a pr
 
 ```text
 Browser
-    │
-    │ POST /api/v1/audits
-    ▼
+    |
+    | POST /api/v1/audits
+    v
 Next.js Frontend (Vercel)
-    │
-    ▼
+    |
+    v
 FastAPI Backend (Render)
-    │
-    ├── URL Validation
-    ├── SSRF Protection
-    ├── HTTP Fetch
-    ├── HTML Parsing
-    └── Response Formatting
-    │
-    ▼
+    |
+    |-- URL Validation
+    |-- SSRF Protection
+    |-- HTTP Fetch
+    |-- HTML Parsing
+    \-- Response Formatting
+    |
+    v
 Structured JSON Report
 ```
 
@@ -171,9 +171,17 @@ Possible HTTP responses:
 |---------|---------|
 | 200 | Success |
 | 400 | Invalid URL |
+| 413 | Response body too large |
 | 422 | Non-HTML Response |
+| 429 | Rate limit exceeded |
 | 502 | Upstream Fetch Error |
 | 504 | Timeout |
+
+Response headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-Request-ID` | Unique request identifier returned on API responses for tracing and debugging. |
 
 ---
 
@@ -286,7 +294,7 @@ Variables
 | CACHE_TTL_SECONDS | Audit response cache duration in seconds |
 | RATE_LIMIT | Per-client API limit, for example `100/hour` |
 | MAX_CONCURRENT_REQUESTS | Maximum concurrent outbound fetches |
-| PORT | Hosting platform port |
+| PORT | Hosting platform port provided by Render in production |
 
 ---
 
@@ -332,25 +340,35 @@ https://page-pulse-2-6vmo.onrender.com/health
 
 ```text
 .
-├── app/
-│   ├── api/
-│   ├── parsers/
-│   ├── schemas/
-│   ├── services/
-│   ├── config.py
-│   └── main.py
-│
-├── frontend/
-│   ├── app/
-│   ├── components/
-│   ├── lib/
-│   ├── types/
-│   └── vitest.config.ts
-│
-├── tests/
-├── render.yaml
-├── requirements.txt
-└── README.md
+|-- .github/
+|   \-- workflows/
+|       \-- ci.yml
+|-- app/
+|   |-- api/
+|   |-- parsers/
+|   |-- schemas/
+|   |-- services/
+|   |-- config.py
+|   |-- errors.py
+|   \-- main.py
+|-- docs/
+|   |-- architecture.md
+|   |-- technology-decisions.md
+|   |-- failure-analysis.md
+|   \-- observability-rollbacks.md
+|-- frontend/
+|   |-- app/
+|   |-- components/
+|   |-- lib/
+|   |-- types/
+|   |-- .env.example
+|   |-- package.json
+|   \-- vitest.config.ts
+|-- tests/
+|-- .env.example
+|-- render.yaml
+|-- requirements.txt
+\-- README.md
 ```
 
 ---
@@ -483,7 +501,7 @@ Benefits:
 - Canonical URL detection
 - Robots.txt analysis
 - Sitemap validation
-- Rate limiting
+
 
 ---
 
@@ -506,21 +524,3 @@ linked to
 https://digitalheroesco.com
 
 ---
-
-# Live Links
-
-### GitHub Repository
-
-https://github.com/poojavenkatapuram/page-pulse
-
-### Live Frontend
-
-https://page-pulse-hazel.vercel.app
-
-### Backend API
-
-https://page-pulse-2-6vmo.onrender.com
-
-### Health Endpoint
-
-https://page-pulse-2-6vmo.onrender.com/health

@@ -37,7 +37,7 @@ export function UrlInput({ value, onChange, onSubmit, isLoading, error }: UrlInp
           disabled={isLoading}
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 text-sm font-semibold text-white transition-colors hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-blue-400"
         >
-          {isLoading ? "Auditing…" : "Audit page"}
+          {isLoading ? "Auditing..." : "Audit page"}
           {!isLoading && <ArrowRight aria-hidden="true" className="size-4" />}
         </button>
       </div>

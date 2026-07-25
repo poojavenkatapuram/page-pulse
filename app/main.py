@@ -45,9 +45,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=resolved_settings.allowed_origins,
-        allow_credentials=False,
-        allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
         expose_headers=["X-Request-ID"],
     )
 
@@ -58,6 +58,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         request.state.request_id = request_id
         request.state.client_ip = _get_client_ip(request)
         request.state.audit_url = None
+
+        if request.method == "OPTIONS":
+            response = await call_next(request)
+            response.headers["X-Request-ID"] = request_id
+            return response
 
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
